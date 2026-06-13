@@ -1,0 +1,83 @@
+@using ITProjectCalculator.Services.Interfaces
+@using ITProjectCalculator.Data.Entities
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">IT Project Calculator</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+@if (showNavMenu)
+{
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        @if (currentUser?.Roles.Any(r => r == "GlobalAdmin") == true)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="users">
+                    <span class="oi oi-people" aria-hidden="true"></span> Users
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="workspaces">
+                    <span class="oi oi-folder" aria-hidden="true"></span> Workspaces
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="settings">
+                    <span class="oi oi-cog" aria-hidden="true"></span> Settings
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="workspaces/my">
+                <span class="oi oi-briefcase" aria-hidden="true"></span> My Workspaces
+            </NavLink>
+        </div>
+
+        @if (currentUser?.Roles.Any(r => r == "GlobalAdmin" || r == "Accountant") == true)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="registries/executors">
+                    <span class="oi oi-list" aria-hidden="true"></span> Executors Registry
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="registries/equipment">
+                    <span class="oi oi-list" aria-hidden="true"></span> Equipment Registry
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="registries/customers">
+                    <span class="oi oi-list" aria-hidden="true"></span> Customers Registry
+                </NavLink>
+            </div>
+        }
+    </nav>
+}
+
+@code {
+    private bool showNavMenu = false;
+    private User? currentUser = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthService.GetCurrentUserAsync();
+    }
+
+    private void ToggleNavMenu()
+    {
+        showNavMenu = !showNavMenu;
+    }
+}

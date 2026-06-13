@@ -1,0 +1,213 @@
+@page "/users"
+@using ITProjectCalculator.Services.Interfaces
+@using ITProjectCalculator.Data.Entities
+@inject IUserService UserService
+@inject IAuthenticationService AuthService
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>User Management</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" @onclick="OpenCreateModal">+ Create User</button>
+        </div>
+    </div>
+
+    @if (users == null)
+    {
+        <div class="alert alert-info">Loading users...</div>
+    }
+    else if (users.Count == 0)
+    {
+        <div class="alert alert-warning">No users found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Position</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.FirstName @user.LastName</td>
+                            <td>@user.Email</td>
+                            <td>@user.Position</td>
+                            <td>@string.Join(", ", user.Roles)</td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => EditUser(user)">Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(editingUser?.Id > 0 ? "Edit User" : "Create User")</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (editingUser != null)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" @bind="editingUser.FirstName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" @bind="editingUser.LastName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" @bind="editingUser.Email" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <input type="text" class="form-control" @bind="editingUser.Position" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Roles</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleAdmin" 
+                                   @onchange="e => ToggleRole(e, "GlobalAdmin")" 
+                                   checked="@editingUser.Roles.Contains("GlobalAdmin")" />
+                            <label class="form-check-label" for="roleAdmin">Global Admin</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleDirector" 
+                                   @onchange="e => ToggleRole(e, "CommercialDirector")" 
+                                   checked="@editingUser.Roles.Contains("CommercialDirector")" />
+                            <label class="form-check-label" for="roleDirector">Commercial Director</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleAccountant" 
+                                   @onchange="e => ToggleRole(e, "Accountant")" 
+                                   checked="@editingUser.Roles.Contains("Accountant")" />
+                            <label class="form-check-label" for="roleAccountant">Accountant</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleHR" 
+                                   @onchange="e => ToggleRole(e, "HRManager")" 
+                                   checked="@editingUser.Roles.Contains("HRManager")" />
+                            <label class="form-check-label" for="roleHR">HR Manager</label>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                <button type="button" class="btn btn-primary" @onclick="SaveUser">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<User>? users;
+    private User? editingUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = await AuthService.GetCurrentUserAsync();
+        if (currentUser?.Roles.Contains("GlobalAdmin") != true)
+        {
+            // Redirect to home if not admin
+            return;
+        }
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        users = await UserService.GetAllUsersAsync();
+    }
+
+    private void OpenCreateModal()
+    {
+        editingUser = new User { IsActive = true };
+    }
+
+    private void EditUser(User user)
+    {
+        editingUser = new User
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Position = user.Position,
+            Roles = new List<string>(user.Roles),
+            IsActive = user.IsActive
+        };
+    }
+
+    private async Task SaveUser()
+    {
+        if (editingUser == null) return;
+
+        if (editingUser.Id > 0)
+        {
+            await UserService.UpdateUserAsync(editingUser);
+        }
+        else
+        {
+            await UserService.CreateUserAsync(editingUser);
+        }
+        await LoadUsers();
+        editingUser = null;
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        if (await UserService.DeleteUserAsync(id))
+        {
+            await LoadUsers();
+        }
+    }
+
+    private void CloseModal()
+    {
+        editingUser = null;
+    }
+
+    private void ToggleRole(ChangeEventArgs e, string role)
+    {
+        if (editingUser == null) return;
+        if ((bool)e.Value!)
+        {
+            if (!editingUser.Roles.Contains(role))
+                editingUser.Roles.Add(role);
+        }
+        else
+        {
+            editingUser.Roles.Remove(role);
+        }
+    }
+}

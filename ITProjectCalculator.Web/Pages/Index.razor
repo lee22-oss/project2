@@ -1,0 +1,74 @@
+@page "/"
+@using ITProjectCalculator.Services.Interfaces
+@inject IAuthenticationService AuthService
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Welcome to IT Project Calculator</h1>
+            <p class="lead">System for calculating IT project development costs</p>
+            
+            @if (isAuthenticated)
+            {
+                <div class="alert alert-success">
+                    <h4>Welcome, @currentUserName!</h4>
+                    <p>You have access to the following features:</p>
+                    <ul>
+                        @if (userRoles.Contains("GlobalAdmin"))
+                        {
+                            <li>User Management</li>
+                            <li>Workspace Management</li>
+                            <li>System Settings</li>
+                        }
+                        <li>Project Management</li>
+                        <li>Resource Planning</li>
+                        <li>Cost Calculations</li>
+                        <li>Document Generation</li>
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <p>Please <a href="login">login</a> to access the system.</p>
+                </div>
+            }
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">System Features</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li>✓ User & Role Management</li>
+                        <li>✓ Workspace Organization</li>
+                        <li>✓ Project Planning</li>
+                        <li>✓ Resource Registry</li>
+                        <li>✓ Cost Calculations</li>
+                        <li>✓ PDF/Excel/Word Export</li>
+                        <li>✓ Commercial Proposals</li>
+                        <li>✓ Intangible Asset Valuation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private string? currentUserName = "";
+    private List<string> userRoles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetCurrentUserAsync();
+        if (user != null)
+        {
+            isAuthenticated = true;
+            currentUserName = $"{user.FirstName} {user.LastName}";
+            userRoles = user.Roles;
+        }
+    }
+}

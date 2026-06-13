@@ -1,0 +1,47 @@
+@inherits LayoutComponentBase
+@using ITProjectCalculator.Services.Interfaces
+@inject IAuthenticationService AuthService
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 auth">
+            @if (isAuthenticated)
+            {
+                <span class="me-3">Welcome, @currentUserName</span>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="Logout">Logout</button>
+            }
+            else
+            {
+                <a href="login">Login</a>
+            }
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private string? currentUserName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetCurrentUserAsync();
+        if (user != null)
+        {
+            isAuthenticated = true;
+            currentUserName = $"{user.FirstName} {user.LastName}";
+        }
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+    }
+}
