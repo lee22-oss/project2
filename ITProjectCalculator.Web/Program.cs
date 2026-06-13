@@ -1,12 +1,14 @@
 using ITProjectCalculator.Data.Context;
 using ITProjectCalculator.Services;
 using ITProjectCalculator.Services.Interfaces;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.RootComponents.Add<ITProjectCalculator.Web.App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
+builder
+    .RootComponents.Add<App>("#app")
+    .RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 

@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ITProjectCalculator.Data\ITProjectCalculator.Data.csproj" />
     <ProjectReference Include="..\ITProjectCalculator.Services\ITProjectCalculator.Services.csproj" />
   </ItemGroup>
 

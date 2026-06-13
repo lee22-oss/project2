@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @using ITProjectCalculator.Services.Interfaces
 @inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
 
 <div class="page">
     <div class="sidebar">
@@ -16,7 +17,7 @@
             }
             else
             {
-                <a href="login">Login</a>
+                <a href="login" class="btn btn-sm btn-outline-primary">Login</a>
             }
         </div>
 
@@ -28,20 +29,28 @@
 
 @code {
     private bool isAuthenticated = false;
-    private string? currentUserName = "";
+    private string currentUserName = "Guest";
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await AuthService.GetCurrentUserAsync();
-        if (user != null)
+        try
         {
-            isAuthenticated = true;
-            currentUserName = $"{user.FirstName} {user.LastName}";
+            var user = await AuthService.GetCurrentUserAsync();
+            if (user != null)
+            {
+                isAuthenticated = true;
+                currentUserName = $"{user.FirstName} {user.LastName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user: {ex.Message}");
         }
     }
 
     private async Task Logout()
     {
         await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 }
